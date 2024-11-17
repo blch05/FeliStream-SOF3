@@ -3,52 +3,55 @@ import WebTorrent from 'webtorrent';
 const client = new WebTorrent();
 
 export default {
-  async playVideo(magnetURI, videoElement) {
+  async seedFile(file, videoElement) {
     try {
-      if (!videoElement) {
-        console.error('Elemento de video no disponible.');
+      if (!file) {
+        console.error('Archivo no disponible.');
         return;
       }
 
-      // Añadir el torrent
-      const torrent = client.add(magnetURI, {
-        // Opcional: configura el cliente para que se conecte a múltiples trackers
-        announce: [
-          'wss://tracker.openwebtorrent.com',
-          'wss://tracker.btorrent.xyz',
-        ],
+      // Sembrar el archivo (hace que el archivo sea accesible para otros)
+      const torrent = await client.seed(file, (torrent) => {
+        // Obtener el Magnet URI generado por WebTorrent
+        const magnetURI = torrent.magnetURI;
+        console.log(`Magnet URI generado: ${magnetURI}`);
+        
+        // Aquí puedes hacer algo con el Magnet URI (por ejemplo, compartirlo con otros)
+
+        // Opcional: mostrar el Magnet URI en la interfaz
+        alert(`Magnet URI: ${magnetURI}`);
+
+        // Si deseas compartirlo con otros usuarios (enviar a tu servidor o base de datos)
+        // fetch('/api/magnets', {
+        //   method: 'POST',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify({ magnetURI }),
+        // });
+
+        // Luego, puedes usar este Magnet URI para compartir el archivo con otros
       });
 
-      // Manejo de errores del torrent
-      torrent.on('error', (err) => {
-        console.error('Error en el torrent:', err);
-      });
-
-      // Cuando el torrent está listo
-      torrent.on('ready', () => {
-        console.log(`Conectado a ${torrent.numPeers} pares.`);
-      });
-
-      // Reproducir el archivo cuando esté listo
+      // Opcional: reproducción del video desde el mismo torrent
       torrent.files.forEach((file) => {
-        // Solo intentar reproducir archivos de video (mp4, webm)
         if (file.name.endsWith('.mp4') || file.name.endsWith('.webm')) {
           console.log(`Transmitiendo archivo: ${file.name}`);
           file.renderTo(videoElement, {
-            autoplay: true,  // Inicia la reproducción automáticamente
-            muted: false,    // Desactivar mute si lo deseas
-            controls: true,  // Activar controles de video
+            autoplay: true,
+            muted: false,
+            controls: true,
           });
         }
       });
 
-      // Cuando el torrent se haya descargado completamente
+      // Cuando la descarga se complete (para dejar de sembrar o hacer algo más)
       torrent.on('done', () => {
         console.log('Descarga completa');
       });
-      
+
     } catch (error) {
-      console.error('Error al reproducir el video:', error);
+      console.error('Error al sembrar el archivo:', error);
     }
   },
 };
