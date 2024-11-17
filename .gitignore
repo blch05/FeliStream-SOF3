@@ -1,0 +1,18 @@
+# Ignorar todos los archivos .log
+*.log
+
+# Ignorar un archivo específico
+secret-config.json
+
+# Ignorar el directorio node_modules/
+node_modules/
+
+# Ignorar el directorio build/
+build/
+
+
+# Archivos temporales de Visual Studio Code
+.vscode/
+
+# Archivos de sistema de macOS
+.DS_Store
