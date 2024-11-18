@@ -1,30 +1,33 @@
-// src/models/magnetModel.js
+// src/models/magnetModel.js (MongoDB versión)
+import mongoose from 'mongoose';
 
-// Arreglo en memoria para almacenar los Magnet URI activos
-let magnets = [];
+// Definir el esquema de Magnet
+const magnetSchema = new mongoose.Schema({
+  name: String,
+  magnetURI: String,
+});
 
-/**
- * Función para obtener todos los Magnet URIs activos
- * @returns {Array} - Lista de magnet URIs activos
- */
-function getAllMagnets() {
-    return magnets;
-}
+// Crear el modelo de Magnet
+const Magnet = mongoose.models.Magnet || mongoose.model('Magnet', magnetSchema);
 
-/**
- * Función para agregar un nuevo Magnet URI
- * @param {string} name - Nombre del video
- * @param {string} magnetURI - Magnet URI del video
- * @returns {Object} - El nuevo magnet URI agregado
- */
-function addMagnet(name, magnetURI) {
-    const newMagnet = { name, magnetURI };
-    magnets.push(newMagnet);
+// Función para obtener todos los Magnet URIs activos
+export const getAllMagnets = async () => {
+  try {
+    return await Magnet.find();
+  } catch (error) {
+    console.error('Error al obtener los Magnet URIs:', error);
+    throw error;
+  }
+};
+
+// Función para agregar un nuevo Magnet URI
+export const addMagnet = async (name, magnetURI) => {
+  try {
+    const newMagnet = new Magnet({ name, magnetURI });
+    await newMagnet.save();
     return newMagnet;
-}
-
-// Exportar las funciones del modelo
-module.exports = {
-    getAllMagnets,
-    addMagnet
+  } catch (error) {
+    console.error('Error al guardar el Magnet URI:', error);
+    throw error;
+  }
 };
