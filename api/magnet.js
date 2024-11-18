@@ -1,71 +1,68 @@
 import mongoose from 'mongoose';
+import multer from 'multer';
+import WebTorrent from 'webtorrent';
 
-const MONGO_URI = process.env.MONGO_URI;  // Tu URI de MongoDB Atlas
+// Configurar multer para almacenar archivos temporalmente
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Guardar en la carpeta 'uploads'
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  },
+});
+const upload = multer({ storage });
 
-// Esquema de ejemplo para 'Magnets'
+// Esquema de "Magnet"
 const magnetSchema = new mongoose.Schema({
   name: String,
-  description: String,
+  magnet: String,
 });
-
 const Magnet = mongoose.models.Magnet || mongoose.model('Magnet', magnetSchema);
 
+// Conexión a MongoDB
+const MONGO_URI = process.env.MONGO_URI; // Asegúrate de tener la URI correcta
+
 export default async function handler(req, res) {
-  // Método GET: Obtener todos los magnets
-  if (req.method === 'GET') {
-    try {
-      // Conectar a MongoDB Atlas (solo si no estamos ya conectados)
-      if (mongoose.connection.readyState !== 1) {
-        await mongoose.connect(MONGO_URI, {
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
+  if (req.method === 'POST') {
+    // Usamos multer para manejar el archivo subido
+    upload.single('file')(req, res, async (err) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error al procesar el archivo' });
+      }
+
+      const file = req.file;
+      if (!file) {
+        return res.status(400).json({ error: 'No se recibió un archivo' });
+      }
+
+      try {
+        // Usamos WebTorrent para crear el magnet link
+        const client = new WebTorrent();
+        client.seed(file.path, (torrent) => {
+          const magnetLink = torrent.magnetURI;
+
+          // Guardar el magnet link en la base de datos
+          const newMagnet = new Magnet({
+            name: file.originalname,
+            magnet: magnetLink,
+          });
+
+          newMagnet.save()
+            .then(() => {
+              res.status(201).json({ message: 'Magnet guardado', magnet: magnetLink });
+            })
+            .catch((err) => {
+              console.error('Error al guardar el magnet:', err);
+              res.status(500).json({ error: 'Error al guardar el magnet' });
+            });
         });
+      } catch (error) {
+        console.error('Error al generar el magnet link:', error);
+        res.status(500).json({ error: 'Error al generar el magnet link' });
       }
-
-      // Obtener todos los "magnets" de la base de datos
-      const magnets = await Magnet.find();
-      res.status(200).json(magnets);
-    } catch (error) {
-      console.error('Error al obtener los magnets:', error);
-      res.status(500).json({ error: 'Error de servidor' });
-    }
-  }
-  
-  // Método POST: Crear un nuevo magnet
-  else if (req.method === 'POST') {
-    try {
-      const { name, description } = req.body;
-
-      // Validación básica
-      if (!name || !description) {
-        return res.status(400).json({ error: 'Faltan datos' });
-      }
-
-      // Conectar a MongoDB Atlas (si no estamos ya conectados)
-      if (mongoose.connection.readyState !== 1) {
-        await mongoose.connect(MONGO_URI, {
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-        });
-      }
-
-      // Crear un nuevo magnet
-      const newMagnet = new Magnet({
-        name,
-        description,
-      });
-
-      // Guardar el magnet en la base de datos
-      await newMagnet.save();
-
-      // Responder con éxito
-      res.status(201).json({ message: 'Magnet creado exitosamente', magnet: newMagnet });
-    } catch (error) {
-      console.error('Error al guardar el magnet:', error);
-      res.status(500).json({ error: 'Error de servidor' });
-    }
+    });
   } else {
-    // Método HTTP no permitido
     res.status(405).json({ error: 'Método no permitido' });
   }
 }
