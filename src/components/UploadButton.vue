@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import magnetController from '../controllers/magnetController'; // Asegúrate de que este controlador esté bien configurado
+import magnetController from '../controllers/magnetController';  // Asegúrate de que este controlador esté bien configurado
 
 export default {
   data() {
@@ -21,13 +21,11 @@ export default {
     async seedFile() {
       if (this.file) {
         try {
-          // Se crea el magnet y se pasa al backend para guardarlo
-          const magnet = await magnetController.seedFile(this.file);
+          const magnet = await magnetController.seedFile(this.file);  // Aquí se obtiene el magnetURI
           
-          // Emitir el magnet link generado para que el frontend lo maneje
-          this.$emit('newMagnet', magnet);
-
-          // Puedes agregar algún mensaje de éxito o redirigir al usuario
+          // Después de obtener el Magnet URI, lo enviamos al backend para guardarlo
+          await this.saveMagnetToDatabase(magnet);
+          
           alert('Video subido y compartido exitosamente.');
         } catch (error) {
           console.error('Error al subir y compartir video:', error);
@@ -35,6 +33,23 @@ export default {
         }
       } else {
         alert('Por favor selecciona un archivo.');
+      }
+    },
+
+    async saveMagnetToDatabase(magnet) {
+      try {
+        await fetch('/api/magnets', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: this.file.name,
+            magnetURI: magnet,
+          }),
+        });
+      } catch (error) {
+        console.error('Error al guardar el Magnet URI:', error);
       }
     },
   },

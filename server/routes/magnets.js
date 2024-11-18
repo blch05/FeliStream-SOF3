@@ -1,17 +1,12 @@
-const express = require('express');
+import express from 'express';
+import { saveMagnet, getMagnets } from '../controllers/magnetsController.js';
+
 const router = express.Router();
-const Magnet = require('../models/Magnet');
-const { saveMagnet } = require('../controllers/magnetsController'); // Importa el controlador
 
+// Ruta para obtener todos los Magnet URIs
+router.get('/', getMagnets);
 
-// Obtener todos los Magnet URIs
-router.get('/', (req, res) => {
-  Magnet.find()
-    .sort({ date: -1 })
-    .then(magnets => res.json(magnets));
-});
-
-// Agregar un nuevo Magnet URI
+// Ruta para guardar un nuevo Magnet URI
 router.post('/', saveMagnet);
 
-module.exports = router;
+export default router;
