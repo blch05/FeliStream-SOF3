@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Magnet = require('../models/Magnet'); // Importa el modelo de Magnet
+const Magnet = require('../models/magnetModel'); // Importa el modelo de Magnet
 
 // Ruta de prueba para guardar un nuevo magnet link
 router.post('/test-save', async (req, res) => {
