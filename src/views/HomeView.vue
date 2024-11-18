@@ -23,8 +23,18 @@
       const magnets = ref([]);
   
       const fetchMagnets = async () => {
-        magnets.value = await magnetController.getMagnets();
+        try {
+          const response = await fetch('/api/magnets');  // Asegúrate de que la URL sea la correcta
+          if (!response.ok) {
+            throw new Error('Error al obtener los Magnet URIs');
+          }
+          const magnetsData = await response.json();
+          magnets.value = magnetsData;
+        } catch (error) {
+          console.error('Error al obtener los Magnet URIs:', error);
+        }
       };
+
   
       const addMagnet = (magnet) => {
         magnets.value.push(magnet);
