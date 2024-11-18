@@ -38,7 +38,7 @@ export default {
 
     async saveMagnetToDatabase(magnet) {
       try {
-        await fetch('/api/magnets', {
+        await fetch('https://tu-aplicacion.vercel.app/api/magnets', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

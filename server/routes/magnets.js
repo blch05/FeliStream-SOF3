@@ -11,7 +11,7 @@ connectDB();
 app.use(express.json());
 
 // Usar las rutas para los Magnets
-app.use('/api/magnets', magnetsRouter);  // Asegúrate de que '/api/magnets' es la ruta correcta
+app.use('https://tu-aplicacion.vercel.app/api/magnets', magnetsRouter);  // Asegúrate de que '/api/magnets' es la ruta correcta
 
 // Inicia el servidor
 const PORT = process.env.PORT || 5000;
