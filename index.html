@@ -22,7 +22,7 @@
     <!-- Barra de progreso -->
     <div id="progress-container" style="display: none;">
         <div id="progress-bar" style="width: 0%; height: 5px; background: green;"></div>
-    </div>
+    </div>F
   
 
     <!-- Mostrar el nombre del video y el botón para copiar el Magnet URI -->
@@ -45,7 +45,7 @@
     <div id="side-menu" class="side-menu">
         <a href="javascript:void(0)" class="close-btn" id="close-btn">&times;</a>
         <h2>Magnet URIs Activos</h2>
-        <ul id="magnet-list"></ul>
+        <ul id="magnetList"></ul>
     </div>
 
     <!-- Carga de WebTorrent desde un CDN -->
@@ -60,7 +60,7 @@
         const videoInfo = document.getElementById('video-info');
         const videoNameDisplay = document.getElementById('video-name');
         const copyButton = document.getElementById('copy-btn');
-        const magnetList = document.getElementById('magnet-list');
+        const magnetList = document.getElementById('magnetList');
         const progressContainer = document.getElementById('progress-container');
         const progressBar = document.getElementById('progress-bar');
         const peersContainer = document.getElementById('peers-container');
@@ -72,20 +72,52 @@
 
         // Función para mostrar los Magnet URI en la lista
         function updateMagnetList() {
-            fetch('/api/magnets')
-                .then(response => response.json())
+            fetch('http://localhost:3000/api/magnets/test-get')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error al obtener los magnets: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Datos obtenidos:', data); // Verifica la estructura de la respuesta
+
+                    // Accede a los magnets dentro de data.data
+                    const magnets = Array.isArray(data.data) ? data.data : [];
+
+                    const magnetList = document.getElementById('magnetList');
+                    if (!magnetList) {
+                        console.error('No se encontró el elemento con ID "magnetList".');
+                        return;
+                    }
+
+                    // Limpiar la lista antes de llenarla
                     magnetList.innerHTML = '';
-                    data.forEach(item => {
-                        const listItem = document.createElement('li');
-                        listItem.innerHTML = `
-                            <strong>${item.name}</strong> - 
-                            <button onclick="copyToClipboard('${item.magnetURI}')">Copiar enlace</button>
-                        `;
-                        magnetList.appendChild(listItem);
+
+                    // Llenar la lista con los magnets obtenidos
+                    magnets.forEach(item => {
+                        if (item.name && item.magnetURI) { // Asegurarse de que 'name' y 'magnetURI' existen
+                            const listItem = document.createElement('li');
+                            listItem.innerHTML = `
+                                <strong>${item.name}</strong>
+                                <button onclick="copyToClipboard('${item.magnetURI}')">Copiar enlace</button>
+                            `;
+                            magnetList.appendChild(listItem);
+                        }
                     });
+                })
+                .catch(error => {
+                    console.error('Error al obtener los magnets:', error);
+                    alert('No se pudieron cargar los magnets. Intenta de nuevo más tarde.');
                 });
         }
+
+
+
+
+
+
+
 
         // Función para copiar el enlace al portapapeles
         function copyToClipboard(magnetURI) {
@@ -117,7 +149,7 @@
                     copyButton.onclick = () => copyToClipboard(torrent.magnetURI);
 
                     // Guardar el Magnet URI en la base de datos
-                    fetch('/api/magnets', {
+                    fetch('http://localhost:3000/api/magnets/test-save', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'

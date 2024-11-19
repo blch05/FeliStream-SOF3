@@ -24,7 +24,7 @@
   
       const fetchMagnets = async () => {
         try {
-          const response = await fetch('/api/magnets');  // Asegúrate de que la URL sea la correcta
+          const response = await fetch('http://localhost:3000/api/magnets/test-save');  // Asegúrate de que la URL sea la correcta
           if (!response.ok) {
             throw new Error('Error al obtener los Magnet URIs');
           }
